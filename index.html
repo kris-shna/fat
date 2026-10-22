@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Campus Energy Monitoring Dashboard</title>
+    <style>
+        body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #f4f6f9; margin: 0; padding: 20px; color: #333; }
+        .container { max-width: 1000px; margin: 0 auto; }
+        h1 { text-align: center; color: #2c3e50; margin-bottom: 30px; }
+        
+        /* Summary Metrics (Enhancement Feature) */
+        .summary-container { display: flex; gap: 20px; margin-bottom: 25px; }
+        .summary-card { flex: 1; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); text-align: center; border-top: 5px solid #3498db; }
+        .summary-card.highest { border-top-color: #e74c3c; }
+        .summary-card h3 { margin: 0 0 10px 0; color: #7f8c8d; font-size: 14px; text-transform: uppercase; }
+        .summary-card p { margin: 0; font-size: 24px; font-weight: bold; color: #2c3e50; }
+
+        /* Building Grid Structure */
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+        .card { background: #fff; border-radius: 8px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); position: relative; }
+        .card h2 { margin-top: 0; color: #2c3e50; border-bottom: 2px solid #ecf0f1; padding-bottom: 10px; }
+        .metric { margin: 12px 0; font-size: 16px; }
+        .metric span { font-weight: bold; color: #2980b9; }
+        
+        /* Initial Commit Feature: Alert Box */
+        .alert { background-color: #fdf2f2; border: 1px solid #f8b4b4; color: #9b1c1c; border-radius: 6px; padding: 12px; margin-top: 15px; font-size: 14px; }
+        .alert strong { font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>🏫 Smart Campus Energy Monitoring System</h1>
+
+        <!-- ENHANCEMENT COMMIT AREA -->
+        <div class="summary-container">
+            <div class="summary-card">
+                <h3>Total Campus Consumption</h3>
+                <p id="total-consumption">Calculated on load...</p>
+            </div>
+            <div class="summary-card highest">
+                <h3>Highest Energy Consumer</h3>
+                <p id="highest-consumer">Calculated on load...</p>
+            </div>
+        </div>
+
+        <!-- INITIAL COMMIT AREA -->
+        <div class="grid" id="building-grid"></div>
+    </div>
+
+    <script>
+        // Sample dataset representing different campus facilities
+        const buildings = [
+            { name: "Engineering Block", consumption: 125, target: 90 },
+            { name: "Science Laboratory", consumption: 85, target: 80 },
+            { name: "Main Library", consumption: 110, target: 75 }
+        ];
+
+        const grid = document.getElementById('building-grid');
+        let totalConsumption = 0;
+        let highestUsage = 0;
+        let highestBuilding = "";
+
+        buildings.forEach(b => {
+            totalConsumption += b.consumption;
+            
+            if (b.consumption > highestUsage) {
+                highestUsage = b.consumption;
+                highestBuilding = b.name;
+            }
+
+            const card = document.createElement('div');
+            card.className = 'card';
+            
+            // Core logic: Warning trigger if consumption rules exceed 100 kWh
+            let alertHtml = '';
+            if (b.consumption > 100) {
+                const excess = b.consumption - 100;
+                alertHtml = `
+                    <div class="alert">
+                        ⚠️ <strong>ALERT:</strong> Exceeds 100 kWh limit by <strong>${excess} kWh</strong>!
+                    </div>`;
+            }
+
+            card.innerHTML = `
+                <h2>${b.name}</h2>
+                <div class="metric">Daily Usage: <span>${b.consumption} kWh</span></div>
+                <div class="metric">Target Limit: <span>${b.target} kWh</span></div>
+                ${alertHtml}
+            `;
+            grid.appendChild(card);
+        });
+
+        // Inject Summary Dashboard calculations
+        document.getElementById('total-consumption').innerText = `${totalConsumption} kWh`;
+        document.getElementById('highest-consumer').innerText = `${highestBuilding} (${highestUsage} kWh)`;
+    </script>
+</body>
+</html>
