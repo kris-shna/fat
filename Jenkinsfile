@@ -6,7 +6,7 @@ pipeline {
     }
 
     environment {
-        DOCKER_HUB_USER = 'yourdockerhubusername' // Replace with your actual Docker Hub username string
+        DOCKER_HUB_USER = 'yourdockerhubusername' // Change to your actual Docker Hub username string
         IMAGE_NAME      = 'smart-campus-energy'
         IMAGE_TAG       = "${BUILD_NUMBER}"
     }
@@ -23,7 +23,6 @@ pipeline {
                 stage('Source Code Validation') {
                     steps {
                         echo "🔍 Verifying index.html structural integrity layout..."
-                        // Windows alternative to check if a file exists
                         bat 'if not exist index.html exit 1' 
                     }
                 }
@@ -48,8 +47,15 @@ pipeline {
             steps {
                 echo "Deploying target environment instance profile: %DEPLOY_ENV%"
                 withKubeConfig([credentialsId: 'kubernetes-cluster-config']) {
-                    // Windows PowerShell/CMD equivalent to substitute strings in text files
-                    bat "powershell -Command \"(Get-Content deployment.yaml) -replace '%DOCKER_HUB_USER%/%IMAGE_NAME%:latest', '%DOCKER_HUB_USER%/%IMAGE_NAME%:%IMAGE_TAG%' | Set-Content deployment.yaml\""
+                    // FIX: Using native Jenkins Groovy code to substitute strings safely without relying on PowerShell
+                    script {
+                        def yamlFile = 'deployment.yaml'
+                        def yamlContent = readFile(yamlFile)
+                        def updatedContent = yamlContent.replace("yourdockerhubusername/smart-campus-energy:latest", "${env.DOCKER_HUB_USER}/${env.IMAGE_NAME}:${env.IMAGE_TAG}")
+                        writeFile(file: yamlFile, text: updatedContent)
+                    }
+                    
+                    // Deploy to local Kubernetes Desktop cluster
                     bat "kubectl apply -f deployment.yaml"
                     bat "kubectl rollout status deployment/energy-monitoring-system --timeout=60s"
                 }
@@ -62,6 +68,7 @@ pipeline {
             echo "🚨 DISRUPTION DETECTED: Rollout health verification checks failed!"
             echo "🔄 Initiating automatic rollback to the previous functional stable image release..."
             withKubeConfig([credentialsId: 'kubernetes-cluster-config']) {
+                // This will pass safely once an initial stable deployment exists on the cluster
                 bat "kubectl rollout undo deployment/energy-monitoring-system"
                 bat "kubectl rollout status deployment/energy-monitoring-system"
                 echo "✅ SUCCESS: Rollback completed cleanly. Monitoring dashboard restored."
