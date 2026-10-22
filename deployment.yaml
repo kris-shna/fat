@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: energy-monitoring-system
+  labels:
+    app: energy-monitor
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: energy-monitor
+  template:
+    metadata:
+      labels:
+        app: energy-monitor
+    spec:
+      containers:
+      - name: dashboard
+        # Replace 'yourdockerhubusername' with your actual account name later
+        image: yourdockerhubusername/smart-campus-energy:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 80
+        # CRITICAL PROTECTION: Probes verify web-server readiness before completing a upgrade routing switch
+        livenessProbe:
+          httpGet:
+            path: /index.html
+            port: 80
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /index.html
+            port: 80
+          initialDelaySeconds: 3
+          periodSeconds: 5
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: energy-monitoring-service
+spec:
+  type: NodePort
+  ports:
+  - port: 80
+    targetPort: 80
+    nodePort: 30080
+  selector:
+    app: energy-monitor
